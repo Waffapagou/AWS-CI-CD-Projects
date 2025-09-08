@@ -3,13 +3,13 @@ import pandas as pd
 from src.exception import CustomException
 from src.utils import load_object
 import logging
+import os
 
 
 # AJOUTER
-import os, pathlib, logging, numpy as np
+import pathlib, numpy as np
 logging.basicConfig(level=logging.INFO)
 
-import os, logging
 logging.info("Exists model? %s", os.path.exists("artefact/model.pkl"))
 logging.info("Exists preproc? %s", os.path.exists("artefact/preprocessor.pkl"))
 
@@ -24,6 +24,14 @@ class PredictPipeline:
     
 
     def predict(self, features):
+        model_path = 'artefact/model.pkl' if os.sep == '/' else 'artefact\\model.pkl'
+        preprocessor_path = 'artefact/preprocessor.pkl' if os.sep == '/' else 'artefact\\preprocessor.pkl'
+
+        logging.info("model_path=%s exists=%s", model_path, os.path.exists(model_path))
+        logging.info("preprocessor_path=%s exists=%s", preprocessor_path, os.path.exists(preprocessor_path))
+        logging.info("Features columns: %s", list(features.columns))
+        logging.info("Sample row: %s", features.head(1).to_dict(orient="records"))
+
         try:
             model_path = 'artefact\model.pkl'
             preprocessor_path = 'artefact\preprocessor.pkl'
