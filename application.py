@@ -6,6 +6,8 @@ import logging, traceback
 logging.basicConfig(level=logging.INFO)
 from sklearn.preprocessing import StandardScaler
 from src.pipeline.predict_pipeline import CustomData,PredictPipeline
+import logging
+logging.basicConfig(level=logging.INFO)
 
 
 application=Flask(__name__ )
@@ -50,14 +52,31 @@ def predict_datapoint():
 
         predict_pipeline = PredictPipeline()
 
-        results = predict_pipeline.predict(pred_df)
+        try:
+            results = predict_pipeline.predict(pred_df)
+        except Exception as e:
+            import traceback
+            tb = traceback.format_exc()
+            app.logger.error("Predict failed: %s\n%s", e, tb)
+    # TEMP: renvoie l’erreur à l’écran pour qu’on la voie (retire ensuite)
+            return render_template('home.html', error=f"Predict error: {e}\n{tb}"), 500
+
 
         return render_template('home.html', results=results[0])
     
+@app.route('/_version')
+def version():
+    import sys, sklearn, numpy, pandas
+    return {
+        "python": sys.version,
+        "sklearn": sklearn.__version__,
+        "numpy": numpy.__version__,
+        "pandas": pandas.__version__,
+    }
+
 @app.errorhandler(500)
 def handle_500(e):
     app.logger.error("Internal error: %s", e, exc_info=True)
     return render_template('home.html', error="Erreur pendant la prédiction (voir logs)."), 500
-
 if __name__ == "__main__":
     app.run(host="0.0.0.0")

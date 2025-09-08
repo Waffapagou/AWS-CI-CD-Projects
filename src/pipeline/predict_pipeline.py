@@ -2,6 +2,8 @@ import sys
 import pandas as pd
 from src.exception import CustomException
 from src.utils import load_object
+import logging
+
 
 # AJOUTER
 import os, pathlib, logging, numpy as np
@@ -86,9 +88,24 @@ class PredictPipeline:
                     features[col] = features[col].replace({None: np.nan, "None": np.nan, "": np.nan}).fillna("Unknown")
 
             logging.info("Predict features row: %s", features.to_dict(orient="records")[0] if not features.empty else features)
+            logging.info("Features columns: %s", list(features.columns))
+            logging.info("Head features: %s", features.head(1).to_dict(orient="records"))
+            logging.info("Attempting transform with preprocessor")
 
-            data_scaled = preprocessor.transform(features)
-            preds = model.predict(data_scaled)
+            try:
+                data_scaled = preprocessor.transform(features)
+            except Exception as e:
+                import traceback
+                logging.error("Preprocessor.transform failed: %s\n%s", e, traceback.format_exc())
+                raise
+
+            try:
+                preds = model.predict(data_scaled)
+            except Exception as e:
+                import traceback
+                logging.error("Model.predict failed: %s\n%s", e, traceback.format_exc())
+                raise
+
             return preds
         except Exception as e:
             raise CustomException(e,sys)
