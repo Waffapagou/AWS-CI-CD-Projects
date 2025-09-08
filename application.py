@@ -2,9 +2,11 @@ from flask import Flask,request,render_template
 import numpy as np
 import pandas as pd
 import pickle
-
+import logging, traceback
+logging.basicConfig(level=logging.INFO)
 from sklearn.preprocessing import StandardScaler
 from src.pipeline.predict_pipeline import CustomData,PredictPipeline
+
 
 application=Flask(__name__ )
 
@@ -31,6 +33,19 @@ def predict_datapoint():
             writing_score = request.form.get('writing_score') 
         )
         pred_df = data.get_data_as_data_frame()
+        # Sanitize/typer les données avant prédiction
+        for col in ['reading_score', 'writing_score']:
+            try:
+                pred_df[col] = pd.to_numeric(pred_df[col], errors='coerce')
+            except Exception:
+                pass
+
+        for col in ['gender','race_ethnicity','parental_level_of_education','lunch','test_preparation_course']:
+            if col in pred_df.columns:
+                pred_df[col] = pred_df[col].fillna('Unknown')
+
+        app.logger.info("Row for predict: %s", pred_df.to_dict(orient='records')[0] if not pred_df.empty else pred_df)
+
         print(pred_df)
 
         predict_pipeline = PredictPipeline()
@@ -38,6 +53,12 @@ def predict_datapoint():
         results = predict_pipeline.predict(pred_df)
 
         return render_template('home.html', results=results[0])
+def handle_500(e):
+    app.logger.error("Internal error: %s\n%s", e, traceback.format_exc())
+    return render_template('home.html', error="Erreur pendant la prédiction (voir logs)."), 500
     
 if __name__ == "__main__":
     app.run(host="0.0.0.0") 
+    @app.errorhandler(500)
+
+
