@@ -99,6 +99,40 @@ class PredictPipeline:
             logging.info("Features columns: %s", list(features.columns))
             logging.info("Head features: %s", features.head(1).to_dict(orient="records"))
             logging.info("Attempting transform with preprocessor")
+            # --- après: preprocessor = load_object(preprocessor_path)
+            try:
+                # Récupère les colonnes catégorielles attendues par le préprocesseur
+                # (adapte si tu as nommé tes transformers)
+                cat_cols = ["gender","race_ethnicity","parental_level_of_education","lunch","test_preparation_course"]
+
+                # Trouver le OneHotEncoder dans le ColumnTransformer
+                ohe = None
+                ohe_cols = None
+                for name, trans, cols in preprocessor.transformers_:
+                    # 'remainder' n’a pas de transfo
+                    if trans is None or name == 'remainder':
+                        continue
+                    # Pipeline de caté ? on cherche l’étape OneHotEncoder
+                    if hasattr(trans, 'named_steps') and 'onehot' in trans.named_steps:
+                        ohe = trans.named_steps['onehot']
+                        ohe_cols = cols
+                        break
+                    # Ou directement un OneHotEncoder
+                    if trans.__class__.__name__ == 'OneHotEncoder':
+                        ohe = trans
+                        ohe_cols = cols
+                        break
+
+                if ohe is not None and hasattr(ohe, 'categories_') and ohe_cols is not None:
+                    # Pour chaque colonne catégorielle, remapper les valeurs inconnues
+                    for col, known in zip(ohe_cols, ohe.categories_):
+                        if col in features.columns:
+                            known_set = set(known.tolist() if hasattr(known, 'tolist') else list(known))
+                            # si 'Unknown' existe parmi les catégories apprises, on s’en sert comme fallback, sinon on prend la 1re catégorie
+                            fallback = 'Unknown' if 'Unknown' in known_set else next(iter(known_set))
+                            features[col] = features[col].apply(lambda v: v if v in known_set else fallback)
+            except Exception as _e:
+                logging.warning("Sanitization des catégories non appliquée: %s", _e)
 
             try:
                 data_scaled = preprocessor.transform(features)
