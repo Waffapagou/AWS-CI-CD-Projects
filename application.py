@@ -53,12 +53,11 @@ def predict_datapoint():
         results = predict_pipeline.predict(pred_df)
 
         return render_template('home.html', results=results[0])
-def handle_500(e):
-    app.logger.error("Internal error: %s\n%s", e, traceback.format_exc())
-    return render_template('home.html', error="Erreur pendant la prédiction (voir logs)."), 500
     
+@app.errorhandler(500)
+def handle_500(e):
+    app.logger.error("Internal error: %s", e, exc_info=True)
+    return render_template('home.html', error="Erreur pendant la prédiction (voir logs)."), 500
+
 if __name__ == "__main__":
-    app.run(host="0.0.0.0") 
-    @app.errorhandler(500)
-
-
+    app.run(host="0.0.0.0")
