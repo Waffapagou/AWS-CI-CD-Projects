@@ -1,8 +1,8 @@
 from flask import Flask,request,render_template
 import numpy as np
 import pandas as pd
-import pickle
 
+import pickle
 import logging, traceback
 logging.basicConfig(level=logging.INFO)
 from sklearn.preprocessing import StandardScaler
@@ -82,3 +82,4 @@ def handle_500(e):
 if __name__ == "__main__":
 
     app.run(host="0.0.0.0")
+
