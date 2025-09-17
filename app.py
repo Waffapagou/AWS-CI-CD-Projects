@@ -1,9 +1,9 @@
 from flask import Flask,request,render_template
 import numpy as np
 import pandas as pd
-
 import pickle
 import logging, traceback
+
 logging.basicConfig(level=logging.INFO)
 from sklearn.preprocessing import StandardScaler
 from src.pipeline.predict_pipeline import CustomData,PredictPipeline
@@ -82,6 +82,7 @@ def handle_500(e):
 if __name__ == "__main__":
 
     app.run(host="0.0.0.0")
+
 
 
 
