@@ -37,6 +37,16 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y jq unzip
+
+        # (Optionnel si ton runner a déjà AWS CLI v2)
+      - name: Ensure AWS CLI v2 is installed
+        run: |
+          if ! command -v aws >/dev/null 2>&1; then
+            curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+            unzip -q awscliv2.zip
+            sudo ./aws/install
+          fi
+          aws --version
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
@@ -108,4 +118,5 @@ jobs:
         run: |
 
          docker system prune -f
+
 
